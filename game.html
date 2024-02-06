@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="gameStyle.css">
+    <title>CHASM</title>
+</head>
+<body>
+	<h1 id="title">CHASM</h1>
+	<div class="flex">
+		<div class="container">
+			<div id="caves">
+				<!-- Caves will be dynamically generated here -->
+			</div>
+			<button id="go" onclick="go()">Go!</button>
+		</div>
+		<div class="hud">
+			<h2 id="gold">G: 100</h2>
+			<ul id="log">
+				
+			</ul>
+		</div>
+	</div>
+    <script src="gameScript.js"></script>
+	<!-- Google tag (gtag.js) -->
+	<script src="https://www.googletagmanager.com/gtag/js?id=G-Z3MD8C7V4K"></script>
+	<script>
+	  window.dataLayer = window.dataLayer || [];
+	  function gtag(){dataLayer.push(arguments);}
+	  gtag('js', new Date());
+
+	  gtag('config', 'G-Z3MD8C7V4K');
+	</script>
+</body>
+</html>
