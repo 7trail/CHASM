@@ -13,6 +13,38 @@ body {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
+#welcome {
+	position: absolute;
+	left: 30vw;
+	width: 40vw;
+	min-height: 30vh;
+	background-color: rgbs(0,0,0,0.1);
+	backdrop-filter: blur(10px);
+	border-radius: 10px;
+	border: 2px solid black;
+	margin: auto;
+	z-index: 1;
+	text-align: center;
+}
+
+#marketValues {
+	background-color: #eeeeee;
+	border-radius: 10px;
+	padding: 50px;
+	display: grid;
+	grid-template-columns: repeat(2, 50%);
+	gap: 5px;
+}
+
+#welcome button {
+	width: 90%;
+	height: 20%;
+	min-height: 50px;
+	background-color: #00dd00;
+	border-radius: 10px;
+	
+}
+
 .flex {
     display: flex;
     justify-content: space-between;
@@ -87,7 +119,7 @@ body {
 .caveButton, .caveButton2 {
 	color:white;
 	border: 2px solid gray;
-	height: 30px;
+	height: 40px;
 	border-radius: 6px;
 	position: absolute;
 
@@ -98,8 +130,26 @@ body {
 	width: 65%;
 	left:5%;
 	bottom: 5px;
-	
 	cursor:pointer;
+}
+
+.marketBtn {
+	color:white;
+	border: 2px solid gray;
+	border-radius: 6px;
+	background-color: #444444;
+	margin-left: 1vw;
+	height: 45px;
+	width:40%;
+	font-size: 16px;
+}
+
+.marketValue {
+	margin-top: 10px;
+}
+
+.marketText {
+	font-size: 20px;
 }
 
 .resetButton {
@@ -153,7 +203,7 @@ button {
 
 .bottom-scalar {
 	position: absolute;
-	bottom: 20px;
+	bottom: 30px;
 	width: 100%;
 	text-align:center;
 }
@@ -215,7 +265,7 @@ button {
 @media screen and (max-width: 600px) {
     /* For screens less than 600px wide (typical mobile screens) */
     .cave {
-        width: 28vw; /* 2 columns, with margin of 10px */
+        width: 43vw; /* 2 columns, with margin of 10px */
 		height: 50vw;
 		padding: 0px;
 		margin-right: 1vw;
@@ -232,12 +282,22 @@ button {
 	}
 	
 	.caveText {
-		font-size: 3vw;
+		font-size: 4vw;
+	}
+	
+	.marketText {
+		font-size: 4vw;
 	}
 	
 	#log {
 		width:80%;
 		height: 150px;
+		margin: 0;
+	}
+	
+	#welcome {
+		left: 10vw;
+		width: 80vw;	
 	}
 	
 	.caveButton {
@@ -245,6 +305,7 @@ button {
 		font-size: 3.5vw;
 		width: 90%;
 	}
+	
 	
 	.caveButton2 {
 		height: 10vw;
@@ -255,7 +316,7 @@ button {
 	}
 	#caves {
 		display: grid;
-		grid-template-columns: repeat(3, 30vw);
+		grid-template-columns: repeat(2, 45vw);
 		justify-content:center;
 		justify-items: center;
 		align-content: center;
@@ -263,6 +324,12 @@ button {
 		margin: auto;
 		padding: 0px 0px 0px 0px;
 		
+	}
+	
+	#marketValues {
+		padding: 15px;
+		background-color: white;
+		grid-template-columns: repeat(1, 100%);
 	}
 	
 	.container {

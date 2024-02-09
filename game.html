@@ -11,18 +11,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="gameStyle.css">
-    <title>CHASM -- Game</title>
+	<script src='perlin.js'></script>
+    <title>CHASM Game</title>
 	
+	<style>
+		.green {
+			color: green;
+		}
+		.red {
+			color: red;
+		}
+	</style>
     
   </head>
   <!-- Google tag (gtag.js) -->
   <body>
     <h1 id="title">CHASM</h1>
+	<div id = "welcome"> 
+		<h1>Welcome to CHASM!</h1>
+		<h2>Pick a cave, invest a little, and see how it goes!</h2>
+		<h2>If you get in trouble, just click that "Reset Save" button and try again! (Lol)</h2>
+		<button onclick="hidewelcome()">Let me play!</button>
+	</div>
     <div class="flex">
       <div class="container">
         <div id="caves">
           <!-- Caves will be dynamically generated here -->
         </div>
+		<div id="marketValues"></div>
         <button id="go" onclick="go()">Go!</button>
       </div>
       <div class="hud">
