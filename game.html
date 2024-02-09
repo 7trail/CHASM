@@ -1,38 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
+    <link rel="apple-touch-icon" sizes="76x76" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="manifest" href="site.webmanifest">
+    <link rel="mask-icon" href="safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#603cba">
+    <meta name="theme-color" content="#ffffff">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="gameStyle.css">
     <title>CHASM</title>
-</head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-Z3MD8C7V4K"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z3MD8C7V4K"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
 
-  gtag('config', 'G-Z3MD8C7V4K');
-</script>
-
-<body>
-	<h1 id="title">CHASM</h1>
-	<div class="flex">
-		<div class="container">
-			<div id="caves">
-				<!-- Caves will be dynamically generated here -->
-			</div>
-			<button id="go" onclick="go()">Go!</button>
-		</div>
-		<div class="hud">
-			<h2 id="gold">G: 100</h2>
-			<ul id="log">
-				
-			</ul>
-		</div>
-	</div>
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-Z3MD8C7V4K');
+    </script>
+  </head>
+  <!-- Google tag (gtag.js) -->
+  <body>
+    <h1 id="title">CHASM</h1>
+    <div class="flex">
+      <div class="container">
+        <div id="caves">
+          <!-- Caves will be dynamically generated here -->
+        </div>
+        <button id="go" onclick="go()">Go!</button>
+      </div>
+      <div class="hud">
+        <h2 id="gold">G: 100</h2>
+        <div id="grid-container" class="grid-box-container"></div>
+        <ul id="log"></ul>
+        <button style="" class="resetButton" onclick="resetSave()">Reset Save...?</button>
+      </div>
+    </div>
     <script src="gameScript.js"></script>
-	
-</body>
+  </body>
 </html>

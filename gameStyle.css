@@ -1,52 +1,61 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
-	
+    font-family: monospace;
+    background-image: url("background4.jpg");
+    background-size: 100% auto;
 }
 
 #title {
-	text-align:center;
-	background-color: #fff;
-	border-radius: 10px;
-	padding: 20px;
-	font-size: 40px;
-	box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    font-size: 40px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .flex {
-	display:flex;
-	justify-content: space-between;
+    display: flex;
+    justify-content: space-between;
 }
 
 .container {
     /*margin: 50px auto;*/
-	flex-grow:1;
-    background-color: #fff;
+    flex-grow: 1;
+    background-color:white;
     padding: 20px;
-	padding-top:1px;
+    padding-top: 1px;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 #caves {
     display: flex;
+	
     flex-wrap: wrap;
-	align-items: left;
-  justify-content: left;
+    align-items: left;
+    justify-content: left;
 }
 
 .cave {
-	position: relative;
-    width: 150px;
+    position: relative;
+    /*width: calc(33.33% - 20px); 3 columns, with margin of 10px */
+	width: 150px;
     height: 150px;
     margin: 10px;
     border: 2px solid #ccc;
     text-align: center;
     padding: 10px;
-	border-radius: 5px;
-	background-color: #eee;
-    /*cursor: pointer;*/
+    border-radius: 5px;
+    background-color: #eee;
+	padding-left: 0px;
+	padding-right: 0px;
 }
+
+.riftCave {
+	-webkit-box-shadow: 0px 0px 45px 0px rgba(214,137,214,1);
+	box-shadow: 0px 0px 45px 0px rgba(214,137,214,1);
+}
+
 
 .hud {
 	height: 100%;
@@ -67,19 +76,40 @@ body {
 }
 
 .caveText {
-	margin-top: 0px;
-	white-space: pre-line;
+    margin-top: 0px;
+    white-space: pre-line;
+    font-size: 14px;
+	-webkit-box-shadow: none;
+	-moz-box-shadow: none;
+	box-shadow: none;
+}
+
+.caveButton, .caveButton2 {
+	color:white;
+	border: 2px solid gray;
+	height: 30px;
+	border-radius: 6px;
+	position: absolute;
+
 }
 
 .caveButton {
 	background-color: #444444;
-	color:white;
-	border: 2px solid gray;
-	width: 80%;
-	height: 25%;
-	border-radius: 6px;
-	position: absolute;
-	left:10%;
+	width: 65%;
+	left:5%;
+	bottom: 5px;
+	
+	cursor:pointer;
+}
+
+.resetButton {
+	display:block;margin:auto;width:200px;height:50px;background-color: #000000;color:white;border-radius: 15px;
+}
+
+.caveButton2 {
+	background-color: #008800;
+	width: 20%;
+	left:75%;
 	bottom: 5px;
 	
 	cursor:pointer;
@@ -89,16 +119,48 @@ body {
     /*background-color: #f0f0f0;*/
 }
 
+.cave.new {
+	border-color: red;
+}
+
 .caveButton:hover {
 	background-color: #252525;
 }
 
+.caveButton2:hover {
+	background-color: #005500;
+}
+
 .unsafe {
-	color: #900000;
+	color: #b00000;
+}
+
+.rampant {
+	color: #00b000;
 }
 
 button {
+	font-size: 1em;
+	font-family: monospace;
+}
+
+.timeText {
+	position: relative;
+	width: 80%;
+	left:10%;
 	font-size: 16px;
+}
+
+.bottom-scalar {
+	position: absolute;
+	bottom: 20px;
+	width: 100%;
+	text-align:center;
+}
+
+.urgent {
+	color:red;
+	text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #e63200, 0 0 20px #e63200, 0 0 25px #e63200, 0 0 30px #e63200, 0 0 35px #e63200;
 }
 
 #log {
@@ -113,7 +175,6 @@ button {
 	text-align:left;
 	overflow: visible;
 	overflow-y:scroll;
-
 }
 
 #go {
@@ -122,5 +183,138 @@ button {
 	background-color: #000000;
 	color:white;
 	border-radius: 15px;
+	display:none;
+}
+
+.grid-box {
+  width: 50px;
+  height: 50px;
+  display: inline-block;
+  border: none;
+}
+
+.grid-box-container {
+  display: grid;
+  grid-template-columns: repeat(5, 50px);
+  grid-template-rows: repeat(5, 50px);
+  gap: 0px;
+  border:2px solid black;
+  width: 250px;
+  align-content: center;
+   margin: auto;
+}
+
+.mobile-grid {
+	display:none;
+}
+@media screen and (min-width: 601px) {
+	.cave {
+		min-height:150px;
+	}
+}
+@media screen and (max-width: 600px) {
+    /* For screens less than 600px wide (typical mobile screens) */
+    .cave {
+        width: 28vw; /* 2 columns, with margin of 10px */
+		height: 50vw;
+		padding: 0px;
+		margin-right: 1vw;
+		margin-left: 1vw;
+    }
 	
+	.flex {
+		flex-direction: column;
+	}
+	
+	.timeText {
+		bottom: -10px;
+	}
+	
+	#log {
+		width:80%;
+		height: 150px;
+	}
+	
+	.caveButton {
+		height: 10vw;
+		width: 90%;
+	}
+	
+	.caveButton2 {
+		height: 10vw;
+		display:none;
+	}
+	.bottom-scalar {
+		bottom: 10vw;
+	}
+	#caves {
+		display: grid;
+		grid-template-columns: repeat(3, 30vw);
+		justify-content:center;
+		justify-items: center;
+		align-content: center;
+		align-items: center;
+		margin: auto;
+		padding: 0px 0px 0px 0px;
+		
+	}
+	
+	.container {
+		background-color: rgba(255,255,255,0.1);
+		backdrop-filter: blur(10px);
+	}
+	
+	.hud {
+		height: 210px;
+		width: 80vw; /* Full width on mobile */
+		flex-shrink:0;
+		flex-grow:0;
+		position: -webkit-sticky;
+		position: sticky;
+		bottom: 10px; /* Stick to the bottom */
+		text-align: center; /* Center text on mobile */
+		background-color: #fff;
+		padding: 20px;
+		padding-top: 1px;
+		border: 2px solid gray;
+		border-radius: 10px;
+		box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+		margin: 10px auto; /* Center horizontally */
+		max-width: 500px; /* Limit maximum width */
+	}
+	#grid-container {
+		display:none;
+	}
+	.grid-box-container {
+		position: relative;
+	  grid-template-columns: repeat(5, 3.5vw);
+	  grid-template-rows: repeat(5, 3.5vw);
+	  border:2px solid black;
+	  width: 17.5vw;
+	  height: 17.5vw;
+	  margin: none;
+	  padding: none;
+	  bottom: -25px;
+	}
+	
+	.mobile-grid {
+		display:grid;
+	}
+	
+	.grid-box {
+	  width: 3.5vw;
+	  height: 3.5vw;
+	  padding:none;
+	  margin:none;
+	}
+	
+	.cave.new {
+		border-color: #ccc;
+	}
+	
+	.resetButton {
+		position:relative;
+		bottom:-20px;
+	}
+
 }
