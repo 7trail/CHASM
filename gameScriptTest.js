@@ -10,12 +10,12 @@ let tileValueDict = {
 		"max":9
 	},
 	2: {
-		"min":8,
-		"max":13
+		"min":7,
+		"max":10
 	},
 	3: {
-		"min":-10,
-		"max":-6
+		"min":-6,
+		"max":-3
 	},
 	4: { //Purple Chance Thing
 		"min":0,
@@ -187,7 +187,7 @@ function generateRandomCave() {
 	const baseValue = 2500;
 	const stability = Math.random();
 	
-	const stabilityString = "Rift";
+	const stabilityString = "Safe";
 	
 	const maxGold = Math.floor(baseValue * (1 + Math.random()*0.4));
 	const minGold = Math.floor(baseValue * (1 - Math.pow(stability,1.5)*0.4)); // Adjust the multiplier for maxGold
@@ -462,6 +462,11 @@ myArray = [
 ];
 c.randomValues = myArray;
 runTest(c, "Test 8: Naturally Generated Values #2");
+myArray = [
+    0,1,1,0,1,0,1,0,1,1,0,1,0,0,1,1,1,0,2,0,0,2,0,0,1
+];
+c.randomValues = myArray;
+runTest(c, "Test 8A: Additional Ideal Square");
 myArray = [
     2,4,5,5,5,4,4,2,5,5,5,5,4,2,5,5,5,4,3,5,4,5,2,5,4
 ];
