@@ -57,13 +57,14 @@
         dataLayer.push(arguments);
       }
       gtag('js', new Date());
+	  gtag('config', 'G-Z3MD8C7V4K', {
+		'page_title': 'CHASM Game'
+	  });
 	  gtag("event", "save_data", {
 		"gold":gold.toString(),
 		"timePlayed":(marketTime*5*10).toString()
 	  });
-      gtag('config', 'G-Z3MD8C7V4K', {
-		'page_title': 'CHASM Game'
-	  });
+      
 
 
     </script>
