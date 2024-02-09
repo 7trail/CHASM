@@ -177,6 +177,10 @@ body {
 	background-color: #252525;
 }
 
+.marketBtn:hover {
+	background-color: #252525;
+}
+
 .caveButton2:hover {
 	background-color: #005500;
 }
