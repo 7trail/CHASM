@@ -1,3 +1,12 @@
+/*Hey!
+ * Just an idea, add a market
+ * Purple/Green squares could give resources isntead of money to use in the market
+ * force the player to mine for them, then trade them at high margins for other resources
+ * just an idea
+*/
+
+
+
 let gold = 100;
 
 const Log = [];
@@ -29,21 +38,21 @@ function updateLogUI() {
 
 let tileValueDict = {
     0: {
-        "min": 0,
-        "max": 3
-    },
-    1: {
-        "min": 3,
-        "max": 9
-    },
-    2: {
-        "min": 8,
-        "max": 13
-    },
-    3: {
-        "min": -10,
-        "max": -6
-    },
+		"min":0,
+		"max":3
+	},
+	1: {
+		"min":3,
+		"max":9
+	},
+	2: {
+		"min":7,
+		"max":10
+	},
+	3: {
+		"min":-6,
+		"max":-3
+	},
     4: {
         "min": 0,
         "max": 0
@@ -279,7 +288,7 @@ function generateRandomCave(canMakeRift) {
 	if (canMakeRift == undefined) {
 		canMakeRift = true;
 	}
-    const baseValue = Math.floor(Math.random() * (3500 - 1500 + 1)) + 1500;
+    const baseValue = Math.floor((Math.pow(Math.random(),1.5) * (3000))*gold/100) + 1500;
     const stability = Math.random();
 
     let stabilityString = "Safe";
