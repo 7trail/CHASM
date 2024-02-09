@@ -227,7 +227,12 @@ button {
 	}
 	
 	.timeText {
+		font-size:4vw;
 		bottom: -10px;
+	}
+	
+	.caveText {
+		font-size: 3vw;
 	}
 	
 	#log {
@@ -237,6 +242,7 @@ button {
 	
 	.caveButton {
 		height: 10vw;
+		font-size: 3.5vw;
 		width: 90%;
 	}
 	
@@ -267,6 +273,7 @@ button {
 	.hud {
 		height: 210px;
 		width: 80vw; /* Full width on mobile */
+		min-width: 100px;
 		flex-shrink:0;
 		flex-grow:0;
 		position: -webkit-sticky;

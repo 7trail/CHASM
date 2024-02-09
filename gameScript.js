@@ -49,7 +49,7 @@ let tileValueDict = {
         "max": 0
     },
     5: {
-        "min": -2,
+        "min": 0,
         "max": 0
     },
 	6: {
@@ -71,7 +71,7 @@ class Cave {
         this.investmentCost = investmentCost;
         this.investmentCount = 0;
         this.tempInvestmentCount = 0;
-        this.stabilityString = "Rift"; //type;
+        this.stabilityString = type;
         this.countDownDate = getRandomTime().getTime();
         this.passCt = 0;
         this.randomValues = [];
