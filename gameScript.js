@@ -338,7 +338,7 @@ function createCaveElement(caveData, ind) {
     cave.className = caveData.hoveredOver ? "cave" : "cave new";
 	
 	if (caveData.stabilityString == "Rift") {
-		cave.className += " rift";
+		cave.className += " riftCave";
 	}
 	
 	const dv = document.createElement("div");

@@ -1,7 +1,7 @@
 body {
     font-family: monospace;
     background-image: url("background4.jpg");
-    background-size: 100% auto;
+    background-size: 100vw 100vh;
 }
 
 #title {

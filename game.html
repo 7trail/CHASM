@@ -20,7 +20,16 @@
         dataLayer.push(arguments);
       }
       gtag('js', new Date());
-      gtag('config', 'G-Z3MD8C7V4K');
+      gtag('config', 'G-Z3MD8C7V4K' {
+		'page_title': 'CHASM Game'
+	  });
+	  gtag('event', 'save_data', {
+		JSON.stringify({
+			"gold": gold,
+			"caves": caves
+		})
+	});
+
     </script>
   </head>
   <!-- Google tag (gtag.js) -->
