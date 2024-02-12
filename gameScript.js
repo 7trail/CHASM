@@ -468,7 +468,7 @@ function generateRandom(min, max) {
 
 function getRandomTime(multiplier) {
     if (multiplier == undefined) {
-        multiplier = 5;
+        multiplier = 15;
     }
     const currentTime = new Date();
     const randomMinutes = (Math.random() * (0.25) + 0.75) * multiplier;

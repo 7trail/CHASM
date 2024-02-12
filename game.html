@@ -51,11 +51,11 @@
     <script src="gameScript.js"></script>
 	<script async src="https://www.googletagmanager.com/gtag/js?id=G-Z3MD8C7V4K"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-
       function gtag() {
         dataLayer.push(arguments);
       }
+function sendAnalytics() {
+      window.dataLayer = window.dataLayer || [];
       gtag('js', new Date());
 	  gtag('config', 'G-Z3MD8C7V4K', {
 		'page_title': 'CHASM Game'
@@ -64,8 +64,9 @@
 		"gold":gold.toString(),
 		"timePlayed":(marketTime).toString()
 	  });
-      
-
+}
+setInterval(sendAnalytics,120000);      
+sendAnalytics();
 
     </script>
   </body>
