@@ -42,7 +42,7 @@ let tileValueDict = {
 		"max":3
 	},
 	1: {
-		"min":3,
+		"min":1,
 		"max":12
 	},
 	2: {
@@ -86,8 +86,9 @@ class Cave {
         this.randomValues = [];
         this.rollRandomValues();
         this.hoveredOver = false;
-		this.purpleValue = type == "Rift" ? 25: 25;
+		this.purpleValue = type == "Rift" ? 35: 25;
 		this.greenValue = 25;
+	this.maxInvestments = 50;
         this.minGold = this.calculateLowestPossible();
         this.maxGold = this.calculateHighestPossible();
     }
@@ -171,7 +172,7 @@ class Cave {
     }
 
     getDisplayString() {
-        let s = `<b class="${this.stabilityString.toLowerCase()}">${this.name}</b>\n????-${this.maxGold} G\n${this.investmentCount}/100`;
+        let s = `<b class="${this.stabilityString.toLowerCase()}">${this.name}</b>\n????-${this.maxGold} G\n${this.investmentCount}/${this.maxInvestments}`;
         if (this.tempInvestmentCount > 0) {
             s += ` (${this.tempInvestmentCount})`;
         }
@@ -525,13 +526,13 @@ function createCaveElement(caveData, ind) {
     createGridFromData(caveData, grid);
 
     let y = function(askInvest) {
-        const maxInvest = Math.min(100-(caveData.investmentCount+caveData.tempInvestmentCount), Math.floor(gold / caveData.investmentCost));
+        const maxInvest = Math.min(caveData.maxInvestments-(caveData.investmentCount+caveData.tempInvestmentCount), Math.floor(gold / caveData.investmentCost));
         const investment = askInvest ? parseInt(prompt(`How many teams do you want to send? (Max. ${maxInvest})`)) : 1; //parseInt(prompt(`How many teams do you want to send? (Max. ${maxInvest})`));
         const theorInvest = investment + caveData.investmentCount + caveData.tempInvestmentCount;
         if (investment > maxInvest) {
             alert(`You need ${(investment*caveData.investmentCost)-gold} more G to invest that much...`);
-        } else if (theorInvest > 100) {
-            alert(`You may only invest in ${caveData.name} ${theorInvest-100} more times...`);
+        } else if (theorInvest > caveData.maxInvestments) {
+            alert(`You may only invest in ${caveData.name} ${caveData.maxInvestments-(caveData.investmentCount + caveData.tempInvestmentCount)} more times...`);
         } else if (isNaN(investment) || investment < 0) {
             alert("Invalid investment amount!");
         } else {
@@ -593,7 +594,7 @@ function createCaveElement(caveData, ind) {
 				}
 			}
 
-            if (caveData.investmentCount >= 100) {
+            if (caveData.investmentCount >= caveData.maxInvestments) {
                 clearInterval(x);
                 handleRemoval(cave, caveData, `<0> has been fully extracted, replacing with <1>`, ind);
                 /*let n = caveData.name;

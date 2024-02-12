@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timer</title>
+</head>
+<body>
+  <div id="timer"></div>
+  
+  <script>
+    // Function to generate a random time between 15 and 20 minutes
+    function getRandomTime() {
+      return Math.floor(Math.random() * (20 - 15 + 1) + 15) * 60 * 1000; // in milliseconds
+    }
+    
+    // Function to display the timer
+    function displayTimer(duration) {
+      const timerElement = document.getElementById('timer');
+      
+      let timer = duration;
+      const interval = setInterval(function() {
+        const minutes = Math.floor((timer / (1000 * 60)) % 60);
+        const seconds = Math.floor((timer / 1000) % 60);
+        
+        timerElement.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        
+        if (--timer < 0) {
+          clearInterval(interval);
+          // Send push notification
+          if ('Notification' in window) {
+            Notification.requestPermission().then(function(permission) {
+              if (permission === 'granted') {
+                new Notification('Hi!');
+              }
+            });
+          }
+        }
+      }, 1000);
+    }
+    
+    // Calculate random time
+    const randomTime = getRandomTime();
+    // Start timer
+    displayTimer(randomTime);
+  </script>
+</body>
+</html>

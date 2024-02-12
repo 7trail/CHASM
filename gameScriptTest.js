@@ -1,34 +1,38 @@
 let gold = 100;
 
 let tileValueDict = {
-	0: {
+    0: {
 		"min":0,
 		"max":3
 	},
 	1: {
-		"min":3,
-		"max":9
+		"min":0,
+		"max":12
 	},
 	2: {
 		"min":7,
-		"max":10
+		"max":14
 	},
 	3: {
 		"min":-6,
 		"max":-3
 	},
-	4: { //Purple Chance Thing
-		"min":0,
-		"max":0
-	},
-	5: {
-		"min":0,
-		"max":0
-	},
+    4: {
+        "min": 0,
+        "max": 0
+    },
+    5: {
+        "min": 0,
+        "max": 0
+    },
 	6: {
 		"min":13,
 		"max":18
-	}
+	},
+	7: {
+        "min": 3,
+        "max": 5
+    },
 };
 
 class Cave {
@@ -46,7 +50,7 @@ class Cave {
         this.randomValues = [];
         this.rollRandomValues();
         this.hoveredOver = false;
-		this.purpleValue = type == "Rift" ? 45: 30;
+	this.purpleValue = type == "Rift" ? 25: 25;
         this.minGold = this.calculateLowestPossible();
         this.maxGold = this.calculateHighestPossible();
     }
