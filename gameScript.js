@@ -3,19 +3,81 @@
  * Purple/Green squares could give resources isntead of money to use in the market
  * force the player to mine for them, then trade them at high margins for other resources
  * just an idea
-*/
-
-
-
+ */
 let gold = 100;
 
 const Log = [];
+let teamLog = {};
+let redeemedSeeds = [];
+let nextExpedition = 0;
+
+function importCave() {
+	let seed = parseInt(prompt("What is the Cave ID?"),32);
+	if (seed in redeemedSeeds) {
+		alert("You have already scanned that cave...");
+		return;
+	}
+	redeemedSeeds.push(seed);
+	caves[0] = generateRandomCave(true, seed);
+	clearInterval(caveIntervals[0]);
+	let cB = caveElements[0];
+	let cE = createCaveElement(caves[0],0);
+    addToLog("A cave has been imported!");
+    cavesContainer.replaceChild(cE,cB);
+	
+	
+}
+
+function RNG(seed) {
+  // LCG using GCC's constants
+  this.m = 0x80000000; // 2**31;
+  this.a = 1103515245;
+  this.c = 12345;
+
+  this.state = seed ? seed : Math.floor(Math.random() * (this.m - 1));
+}
+RNG.prototype.nextInt = function() {
+  this.state = (this.a * this.state + this.c) % this.m;
+  return this.state;
+}
+RNG.prototype.nextFloat = function() {
+  // returns in range [0,1]
+  return this.nextInt() / (this.m - 1);
+}
+RNG.prototype.nextRange = function(start, end) {
+  // returns in range [start, end): including start, excluding end
+  // can't modulu nextInt because of weak randomness in lower bits
+  var rangeSize = end - start;
+  var randomUnder1 = this.nextInt() / this.m;
+  return start + Math.floor(randomUnder1 * rangeSize);
+}
+RNG.prototype.choice = function(array) {
+  return array[this.nextRange(0, array.length)];
+}
+
+
+function appendToTeamLog(teamID, teamMsg,caveData) {
+    if (teamLog.hasOwnProperty(teamID)) {
+        teamLog[teamID]["log"].push(teamMsg);
+    } else {
+        teamLog[teamID] = {
+            "log": [teamMsg],
+			"name": caveData.name,
+			"values": caveData.randomValues
+        };
+    }
+}
+
+function getNextTeamID() {
+    nextExpedition++;
+    return nextExpedition;
+}
 
 function addToLog(newLine) {
     Log.push(newLine);
 
-    if (Log.length > 20) {
-        Log.splice(0, Log.length - 20);
+    if (Log.length > 30) {
+        Log.splice(0, Log.length - 30);
     }
     updateLogUI();
 }
@@ -35,23 +97,22 @@ function updateLogUI() {
 
     log.scrollTop = log.scrollHeight;
 }
-
 let tileValueDict = {
     0: {
 		"min":0,
-		"max":3
+		"max":5
 	},
 	1: {
-		"min":1,
-		"max":12
+		"min":3,
+		"max":6
 	},
 	2: {
 		"min":7,
-		"max":14
+		"max":12
 	},
 	3: {
-		"min":-6,
-		"max":-3
+		"min":-8,
+		"max":-6
 	},
     4: {
         "min": 0,
@@ -72,7 +133,13 @@ let tileValueDict = {
 };
 
 class Cave {
-    constructor(name, type, investmentCost, baseValue) {
+    constructor(name, type, investmentCost, baseValue, randArr) {
+		if (randArr === undefined) {
+			randArr = [];
+			for (let i = 0; i < 500; i++) {
+				randArr.push(Math.random());
+			}
+		}
         this.name = name;
         this.baseValue = baseValue;
         this.minGold = 0;
@@ -84,13 +151,17 @@ class Cave {
         this.countDownDate = getRandomTime().getTime();
         this.passCt = 0;
         this.randomValues = [];
-        this.rollRandomValues();
+        this.displayValues = [];
+		
+        this.rollRandomValues(randArr);
         this.hoveredOver = false;
-		this.purpleValue = type == "Rift" ? 35: 25;
-		this.greenValue = 25;
-	this.maxInvestments = 50;
+        this.purpleValue = type == "Rift" ? 35 : 25;
+        this.greenValue = 25;
+        this.maxInvestments = 50;
         this.minGold = this.calculateLowestPossible();
         this.maxGold = this.calculateHighestPossible();
+		this.seed = 0;
+		this.relics = 0;
     }
 
     calculateLowestPossible() {
@@ -133,7 +204,7 @@ class Cave {
             } else {
                 let f = 1;
                 //Experimental Synergy System
-                f *= this.stabilityString == "Rampant" ? 0.4 : 0.9;
+                f *= this.stabilityString == "Rampant" ? 0.5 : 0.9;
                 let mod = this.stabilityString == "Rampant" ? 0.2 : 0.05;
                 if (i > 0 && this.randomValues[i] == this.randomValues[i - 1]) {
                     f += mod;
@@ -149,26 +220,46 @@ class Cave {
                 }
                 t += lerp(data["min"], data["max"], f);
             }
-			
-			if (v == 7) { t+=this.greenValue; }
+
+            if (v == 7) {
+                t += this.greenValue;
+            }
 
         }
         return Math.floor((t / 100) * this.baseValue);
     }
 
-    rollRandomValues() {
-        let spreadDict = {"default":[0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,2],"rift":[5,5,5,5,5,4,4,4,4,4,6],"rampant":[0,0,0,0,0,0,0,0,1,1,1,1,1,7,7,2]};
-		let options = (this.stabilityString !== undefined && this.stabilityString.toLowerCase()) in spreadDict ? spreadDict[this.stabilityString.toLowerCase()] : spreadDict["default"];
+    rollRandomValues(randArr) {
+		let start = 0;
+		function getR() {
+			let val = randArr[start];
+			start++;
+			return val;
+		}
+        let spreadDict = {
+            "default": [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2],
+            "rift": [5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 6],
+            "rampant": [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 7, 7, 2]
+        };
+        let options = (this.stabilityString !== undefined && this.stabilityString.toLowerCase()) in spreadDict ? spreadDict[this.stabilityString.toLowerCase()] : spreadDict["default"];
         this.randomValues = [];
         for (let i = 0; i < 25; i++) {
-            let o = options[Math.floor(Math.random() * options.length)];
-            if (Math.random() < 0.01) {
+            let o = options[Math.floor(getR() * options.length)];
+            if (getR() < 0.015) {
                 o = 3;
-            } else if (Math.random() < 0.01 && (this.stabilityString === undefined || this.stabilityString != "Rampant")) {
+            } else if (getR() < 0.01 && (this.stabilityString === undefined || this.stabilityString != "Rampant")) {
                 o = 4;
             }
             this.randomValues.push(o);
+            this.displayValues.push(getR() < 0.2 ? 1000 : o);
         }
+        //Obscured part. This system is fully experimental and subject to change.
+        /*let obsX = Math.floor(Math.random() * 3.99);
+        let obsY = Math.floor(Math.random() * 3.99);
+        this.displayValues[obsX*5+obsY] = 1000;
+        this.displayValues[obsX*5+obsY+1] = 1000;
+        this.displayValues[obsX*5+obsY+5] = 1000;
+        this.displayValues[obsX*5+obsY+6] = 1000;*/
     }
 
     getDisplayString() {
@@ -181,19 +272,26 @@ class Cave {
     }
 
     calculateGoldOutput() {
+		if (this.relics === undefined) {
+			this.relics = 0;
+		}
         let t = 0;
+		let tArray = []
         let logMessages = [];
-		let pluralMsg = this.tempInvestmentCount > 1 ? "teams": "team";
+        let pluralMsg = this.tempInvestmentCount > 1 ? "teams" : "team";
         for (let i = 0; i < 25; i++) {
             let v = this.randomValues[i];
             let data = tileValueDict[v];
             if (v == 4) {
                 if (Math.random() < 0.25) {
                     logMessages.push(`<span style="color:purple;">Your ${pluralMsg} struck extra-rare minerals! (You gained ${this.stabilityString == "Rift" ? 2 : 1} gems!)</span>`);
-					marketValueDict["gems"]["owned"] += this.stabilityString == "Rift" ? 2 : 1;
-					updateMarket(false);
+                    marketValueDict["gems"]["owned"] += this.stabilityString == "Rift" ? 2 : 1;
+                    updateMarket(false);
                     t += this.purpleValue;
-                }
+					tArray.push(1);
+                } else {
+					tArray.push(0);
+				}
             } else {
                 let f = Math.pow(Math.random(), 1);
                 //Experimental Synergy System
@@ -211,14 +309,33 @@ class Cave {
                 if (i < 20 && this.randomValues[i] == this.randomValues[i + 5]) {
                     f += mod;
                 }
-                t += lerp(data["min"], data["max"], f);
+				let tTemp = lerp(data["min"], data["max"], f);
+                t += tTemp;
+				tArray.push(f);
+				
+				if (v <= 2) { /*Checks for potential random events*/
+					if (Math.random() < 0.01) {
+						addToLog("<u>A relic has been found!</u>");
+						this.investmentCost *= 1.05;
+						this.relics++;
+						this.baseValue *= 1.05;
+						this.baseValue = Math.floor(this.baseValue);
+						this.investmentCost = Math.floor(this.investmentCost);
+						this.maxGold = this.calculateHighestPossible();
+					}
+				}
+				
             }
-			
-			if (v == 7) {
-                if (Math.random() < 0.25) { logMessages.push(`<span style="color:green;">Your ${pluralMsg} found rare wildlife!</span>`); t+=this.greenValue; }
+
+            if (v == 7) {
+                if (Math.random() < 0.25) {
+                    logMessages.push(`<span style="color:green;">Your ${pluralMsg} found rare wildlife!</span>`);
+                    t += this.greenValue;
+                }
             }
 
         }
+	t *= 0.8 + Math.random()*0.4;
         let totalGoldOutput = Math.floor((t / 100) * this.baseValue);
 
 
@@ -232,13 +349,17 @@ class Cave {
                 totalGoldOutput *= 2;
             }
         }
+		let origTotal = Math.floor(totalGoldOutput);
         totalGoldOutput = Math.floor(totalGoldOutput / (100 / this.tempInvestmentCount));
         let roi = (totalGoldOutput / (this.tempInvestmentCount * this.investmentCost));
         logMessages.push(`<b>Your ${this.tempInvestmentCount} ${pluralMsg} on ${this.name} gathered ${totalGoldOutput} G (${roi.toFixed(2)} ROI)</b>`);
         return {
             "total": Math.floor(totalGoldOutput),
             "log": logMessages,
-            "roi": roi
+            "roi": roi,
+			"origTotal": origTotal,
+			"totalArray": tArray,
+			"invests": this.tempInvestmentCount
         };
     }
 
@@ -253,148 +374,222 @@ class Cave {
 }
 
 let marketTime = 0;
-let seed = Math.floor(Math.random()*60000);
+let seed = Math.floor(Math.random() * 60000);
 noise.seed(seed);
 let marketCoreDict = {
-	"gems": {
-		"func": function() {
-			return formatNoise(noise.simplex2(marketTime+0.1, 100)) * 100 + 100;
-		}
-	},
-	"gold": {
-		"func": function() {
-			return Math.pow(formatNoise(noise.simplex2(marketTime+0.1, 500)),3) * 500 + 250;
-		}
-	},
-	"iron": {
-		"func": function() {
-			let n1 = formatNoise(noise.simplex2(marketTime*8+0.1, 900));
-			let n2 = formatNoise(noise.simplex2(marketTime*1500+0.1, 1100));
-			let n3 = formatNoise(noise.simplex2(marketTime+0.1,1000));
-			let n4 = (n1 + lerp(n1,n2,n3))/2;
-			return n4 * 100 + 100;
-		}
-	},
-	"onyx": {
-		"func": function() {
-			return formatNoise(noise.simplex2(marketTime/10+0.1, 300)) * 2100 + 200;
-		}
-	}
+    "gems": {
+        "func": function() {
+            return formatNoise(noise.simplex2(marketTime + 0.1, 100)) * 100 + 100;
+        },
+	"min": 100,
+	"max": 200
+    },
+    "gold": {
+        "func": function() {
+	    let v1 = formatNoise(noise.simplex2(marketTime + 0.1, 500));
+	    let v2 = formatNoise(noise.simplex2(marketTime*5 + 0.1, 550));
+            return Math.pow(v1*0.6 + v2 * 0.4, 3) * 500 + 250;
+        },
+	"min": 250,
+	"max": 750
+    },
+    "iron": {
+        "func": function() {
+            let n1 = formatNoise(noise.simplex2(marketTime * 8 + 0.1, 900));
+            let n2 = formatNoise(noise.simplex2(marketTime * 1500 + 0.1, 1100));
+            let n3 = formatNoise(noise.simplex2(marketTime + 0.1, 1000));
+            let n4 = (n1 + lerp(n1, n2, n3)) / 2;
+            return n4 * 100 + 100;
+        },
+	"min": 100,
+	"max": 200
+    },
+    "onyx": {
+        "func": function() {
+            return formatNoise(noise.simplex2(marketTime / 10 + 0.1, 300)) * 2100 + 800;
+        },
+	"min": 800,
+	"max": 2300
+    }
 }
 
 let marketValueDict = {
-	"gems": {"current": 150, "previous": 150, "owned":0, "buyOrder": 0, "sellOrder": 0},
-	"gold": {"current": 500, "previous": 500, "owned":0, "buyOrder": 0, "sellOrder": 0},
-	"iron": {"current": 150, "previous": 150, "owned":0, "buyOrder": 0, "sellOrder": 0},
-	"onyx": {"current": 1250, "previous": 1250, "owned":0, "buyOrder": 0, "sellOrder": 0}
+    "gems": {
+        "current": 150,
+        "previous": 150,
+        "owned": 0,
+        "buyOrder": 0,
+        "sellOrder": 0,
+	"historic":[]
+    },
+    "gold": {
+        "current": 500,
+        "previous": 500,
+        "owned": 0,
+        "buyOrder": 0,
+        "sellOrder": 0,
+	"historic":[]
+    },
+    "iron": {
+        "current": 150,
+        "previous": 150,
+        "owned": 0,
+        "buyOrder": 0,
+        "sellOrder": 0,
+	"historic": []
+    },
+    "onyx": {
+        "current": 1250,
+        "previous": 1250,
+        "owned": 0,
+        "buyOrder": 0,
+        "sellOrder": 0,
+	"historic": []
+    }
 };
 
 function updateMarket(increaseTime) {
-	if (increaseTime === undefined) {
-		increaseTime = true;
-	}
-	if (increaseTime) {marketTime+=0.02;}
-	for (let i = 0; i < Object.keys(marketValueDict).length; i++) {
-		let key = Object.keys(marketValueDict)[i];
-		let value = marketValueDict[key];
-		if (increaseTime) {
-			marketValueDict[key]["previous"] = value["current"];
-			marketValueDict[key]["current"] = marketCoreDict[key]["func"]();
-		
-			if (value["sellOrder"] > 0) {
-				let saleAmnt = Math.floor(value["sellOrder"] * value["current"] * 0.95);
-				gold += saleAmnt;
-				addToLog(`<b>You received ${saleAmnt} for your sale of ${value["sellOrder"]} ${key}!</b>`);
-				marketValueDict[key]["sellOrder"] = 0;
-			}
-			if (value["buyOrder"] > 0) {
-				marketValueDict[key]["owned"] += value["buyOrder"];
-				addToLog(`<b>You received ${value["buyOrder"]} ${key} from your purchases!</b>`);
-				marketValueDict[key]["buyOrder"] = 0;
-			}
+    if (increaseTime === undefined) {
+        increaseTime = true;
+    }
+    if (increaseTime) {
+        marketTime += 0.005;
+    }
+    for (let i = 0; i < Object.keys(marketValueDict).length; i++) {
+        let key = Object.keys(marketValueDict)[i];
+        let value = marketValueDict[key];
+        if (increaseTime) {
+	    if (marketValueDict[key]["historic"] === undefined) {
+		marketValueDict[key]["historic"] = [];
+	    }
+	    marketValueDict[key]["historic"].push(value["current"]);
+		if (marketValueDict[key]["historic"].length > 40) {
+        		marketValueDict[key]["historic"].splice(0, marketValueDict[key]["historic"].length - 40);
+    		}
+	    
+            marketValueDict[key]["previous"] = value["current"];
+            marketValueDict[key]["current"] = marketCoreDict[key]["func"]();
+
+            if (value["sellOrder"] > 0) {
+                let saleAmnt = Math.floor(value["sellOrder"] * value["current"] * 0.95);
+                gold += saleAmnt;
+                addToLog(`<b>You received ${saleAmnt} for your sale of ${value["sellOrder"]} ${key}!</b>`);
+                marketValueDict[key]["sellOrder"] = 0;
+            }
+            if (value["buyOrder"] > 0) {
+                marketValueDict[key]["owned"] += value["buyOrder"];
+                addToLog(`<b>You received ${value["buyOrder"]} ${key} from your purchases!</b>`);
+                marketValueDict[key]["buyOrder"] = 0;
+            }
+        }
+        updateGoldDisplay();
+    }
+    var marketValuesDiv = document.getElementById("marketValues");
+    marketValuesDiv.innerHTML = "";
+    for (let i = 0; i < Object.keys(marketValueDict).length; i++) {
+        let key = Object.keys(marketValueDict)[i];
+        if (marketValueDict[key] !== undefined) {
+            var currentValue = marketValueDict[key].current;
+            var previousValue = marketValueDict[key].previous;
+            var change = currentValue - previousValue;
+            var percentageChange = (change / previousValue) * 100;
+
+            var triangle = "";
+            var colorClass = "";
+
+            if (change > 0) {
+                triangle = "▲";
+                colorClass = "green";
+            } else if (change < 0) {
+                triangle = "▼";
+                colorClass = "red";
+            } else {
+                triangle = "-";
+                colorClass = "red";
+            }
+
+            var percentageText = percentageChange.toFixed(2) + "%";
+            var displayText = key.toUpperCase() + ": " + currentValue.toFixed(2) + " (" + triangle + " " + percentageText + ") OWNED: " + marketValueDict[key]["owned"];
+            var el = document.createElement("div");
+            el.className = "marketValue";
+            var tx = document.createElement("p");
+            tx.textContent = displayText;
+            tx.className = "marketText";
+            tx.classList.add(colorClass);
+
+            let buyOrderFunc = function() {
+                if (gold >= Math.floor(marketValueDict[key]["current"])) {
+                    marketValueDict[key]["buyOrder"]++;
+                    gold -= Math.floor(marketValueDict[key]["current"]);
+                    addToLog(`Put in a buy order for ${key}`);
+                    updateGoldDisplay();
+                } else {
+                    alert(`You do not have enough G to buy ${key}...`);
+                }
+                var displayText = key.toUpperCase() + ": " + currentValue.toFixed(2) + " (" + triangle + " " + percentageText + ") OWNED: " + marketValueDict[key]["owned"];
+                tx.textContent = displayText;
+            };
+
+            let sellOrderFunc = function() {
+                if (marketValueDict[key]["owned"] > 0) {
+                    marketValueDict[key]["sellOrder"]++;
+                    marketValueDict[key]["owned"]--;
+                    addToLog(`Put in a sell order for ${key}`);
+                } else {
+                    alert(`You do not own any ${key}...`);
+                }
+                var displayText = key.toUpperCase() + ": " + currentValue.toFixed(2) + " (" + triangle + " " + percentageText + ") OWNED: " + marketValueDict[key]["owned"];
+                tx.textContent = displayText;
+            };
+
+
+            var btnBuy = document.createElement("button");
+            btnBuy.textContent = "Buy!";
+            btnBuy.className = "marketBtn";
+            btnBuy.onclick = buyOrderFunc;
+            var btnSell = document.createElement("button");
+            btnSell.textContent = "Sell!";
+            btnSell.className = "marketBtn";
+            btnSell.onclick = sellOrderFunc;
+            marketValuesDiv.appendChild(el);
+            el.appendChild(tx);
+            el.appendChild(btnBuy);
+            el.appendChild(btnSell);
+	const clamp = (a, min = 0, max = 1) => Math.min(max, Math.max(min, a));
+	const invlerp = (x, y, a) => clamp((a - x) / (y - x));
+	    let canv = document.createElement('canvas');
+		canv.id = "marketCanvas";
+	    el.appendChild(canv);
+	    canv.width = 200;
+	    canv.height = 125;
+	    const ctx = canv.getContext("2d");
+	    ctx.lineWidth = 3;
+  	    const img = new Image();
+	    img.width = 200;
+	    img.height = 125;
+  	    img.onload = () => {
+    	    	ctx.drawImage(img, 0, 0);
+    		ctx.beginPath();
+    		ctx.moveTo(0, 120 - invlerp(marketCoreDict[key]["min"],marketCoreDict[key]["max"],marketValueDict[key]["historic"][0])*100);
+		for (let i = 0; i < marketValueDict[key]["historic"].length; i++) {
+			ctx.lineTo((i+1)*(200/marketValueDict[key]["historic"].length), 120 - invlerp(marketCoreDict[key]["min"],marketCoreDict[key]["max"],marketValueDict[key]["historic"][i])*100);
 		}
-		updateGoldDisplay();
-	}
-	var marketValuesDiv = document.getElementById("marketValues");
-	marketValuesDiv.innerHTML = "";
-	for (let i = 0; i < Object.keys(marketValueDict).length; i++) {
-		let key = Object.keys(marketValueDict)[i];
-		if (marketValueDict[key]!==undefined) {
-			var currentValue = marketValueDict[key].current;
-			var previousValue = marketValueDict[key].previous;
-			var change = currentValue - previousValue;
-			var percentageChange = (change / previousValue) * 100;
 
-			var triangle = "";
-			var colorClass = "";
+    		ctx.stroke();
+  	    };
+	    img.src = "blank.png";
 
-			if (change > 0) {
-				triangle = "▲";
-				colorClass = "green";
-			} else if (change < 0) {
-				triangle = "▼";
-				colorClass = "red";
-			} else {
-				triangle = "-";
-				colorClass = "red";
-			}
-
-			var percentageText = percentageChange.toFixed(2) + "%";
-			var displayText = key.toUpperCase() + ": " + currentValue.toFixed(2) + " (" + triangle + " " + percentageText + ") OWNED: " + marketValueDict[key]["owned"];
-			var el = document.createElement("div");
-			el.className = "marketValue";
-			var tx = document.createElement("p");
-			tx.textContent = displayText;
-			tx.className = "marketText";
-			tx.classList.add(colorClass);
-			
-			let buyOrderFunc = function() {
-				if (gold >= Math.floor(marketValueDict[key]["current"])) {
-					marketValueDict[key]["buyOrder"]++;
-					gold -= Math.floor(marketValueDict[key]["current"]);
-					addToLog(`Put in a buy order for ${key}`);
-					updateGoldDisplay();
-				} else {
-					alert(`You do not have enough G to buy ${key}...`);
-				}
-				var displayText = key.toUpperCase() + ": " + currentValue.toFixed(2) + " (" + triangle + " " + percentageText + ") OWNED: " + marketValueDict[key]["owned"];
-				tx.textContent = displayText;
-			};
-			
-			let sellOrderFunc = function() {
-				if (marketValueDict[key]["owned"] > 0) {
-					marketValueDict[key]["sellOrder"]++;
-					marketValueDict[key]["owned"]--;
-					addToLog(`Put in a sell order for ${key}`);
-				} else {
-					alert(`You do not own any ${key}...`);
-				}
-				var displayText = key.toUpperCase() + ": " + currentValue.toFixed(2) + " (" + triangle + " " + percentageText + ") OWNED: " + marketValueDict[key]["owned"];
-				tx.textContent = displayText;
-			};
-			
-			
-			var btnBuy = document.createElement("button");
-			btnBuy.textContent = "Buy!";
-			btnBuy.className = "marketBtn";
-			btnBuy.onclick = buyOrderFunc;
-			var btnSell = document.createElement("button");
-			btnSell.textContent = "Sell!";
-			btnSell.className = "marketBtn";
-			btnSell.onclick = sellOrderFunc;
-			marketValuesDiv.appendChild(el);
-			el.appendChild(tx);
-			el.appendChild(btnBuy);
-			el.appendChild(btnSell);
-		}
-	}
+        }
+    }
 }
 
 setInterval(updateMarket, 15000);
 
-function formatNoise(n) { return n/2 + 0.5; }
+function formatNoise(n) {
+    return n / 2 + 0.5;
+}
 
-function generateCodename() {
+function generateCodename(v1,v2) {
     // Generate two random letters
     const randomLetter1 = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // Random uppercase letter
     const randomLetter2 = String.fromCharCode(65 + Math.floor(Math.random() * 26));
@@ -418,44 +613,75 @@ function generateCodename() {
         'Purity', 'Crescent', 'Reflect', 'Sylvan', 'Vista',
         'Aurora', 'Tranquil', 'Ballet', 'Seraph', 'Empyrean',
         'Halcyon', 'Oasis', 'Pacify', 'Cherish', 'Velvet',
+		"Shadowrealm", "Abyssal", "Subterra", "Echo", "Darkhold",
+		"Gloomhaven", "Obsidian", "Cryptic", "Chasm", "Mystique",
+		"Umbral", "Labyrinth", "Silentium", "Nether", "Stygian", 
+		"Phantom", "Sunder", "Eclipse", "Vault", "Veil", "Echoes", 
+		"Whisper", "Specter", "Fathom", "Shadowscape", "Enigma", "Thornhold", 
+		"Abyss", "Myst", "Shroud", "Hollow", "Twilight", 
+		"Cimmerian", "Nocturne", "Tenebris"
     ];
+	
+	const adjectives = [
+	  "Ethereal", "Resplendent", "Surreal", "Majestic", "Effervescent", "Serene", "Enigmatic", "Opulent", "Radiant", "Nebulous", 
+	  "Astral", "Vibrant", "Luminous", "Ethereal", "Mystical", "Transcendent", "Glorious", "Cerulean", "Scintillating", "Celestial",
+	  "Bewitching", "Halcyon", "Phantasmagorical", "Quixotic", "Elysian", "Incandescent", "Diaphanous", "Crepuscular", "Sublime", 
+	  "Spectral", "Effulgent", "Zephyrous", "Vivid", "Illustrious", "Panoramic", "Resplendent", "Fascinating", "Exquisite", "Breathtaking",
+	  "Whimsical", "Pristine"
+	];
 
+	
     // Choose a random word from the list
-    const randomWord = options[Math.floor(Math.random() * options.length)];
+    const randomWord = adjectives[Math.floor(v1 * adjectives.length)];
+	const randomWord2 = options[Math.floor(v2 * options.length)];
 
     // Combine the codename with the random word
-    const finalCodename = `${codename} "${randomWord}"`;
+    const finalCodename = `"${randomWord} ${randomWord2}"`;
 
     return finalCodename;
 }
 
-function generateRandomCave(canMakeRift) {
-	if (canMakeRift == undefined) {
-		canMakeRift = true;
+function generateRandomCave(canMakeRift, seed) {
+    if (canMakeRift == undefined) {
+        canMakeRift = true;
+    }
+	let manualSeed = true;
+	if (seed === undefined) {
+		manualSeed = false;
+		seed = Math.random() * 2000000000;
 	}
-    const baseValue = Math.floor((Math.pow(Math.random(),1.5) * (2000))*gold/100) + 1500;
-    const stability = Math.random();
+	
+	let rng = new RNG(Math.floor(seed));
+	
+    const baseValue = Math.floor((Math.pow(rng.nextFloat(), 1.5) * (2000)) * Math.max(1,gold / 300)) + 1500;
+    const stability = rng.nextFloat();
 
     let stabilityString = "Safe";
-    let chooser = Math.random() * 100;
+    let chooser = rng.nextFloat() * 100;
     if (chooser < 75) {
-        if (Math.random() < 0.01 && canMakeRift) {
-			stabilityString = "Rift";
-		}
+        if (rng.nextFloat() < 0.01 && canMakeRift) {
+            stabilityString = "Rift";
+        }
     } else if (chooser < 90) {
         stabilityString = "Unsafe";
     } else {
         stabilityString = "Rampant";
     }
 
-    const maxGold = Math.floor(baseValue * (1 + Math.random() * 0.4));
+    const maxGold = Math.floor(baseValue * (1 + rng.nextFloat() * 0.4));
     const minGold = Math.floor(baseValue * (1 - Math.pow(stability, 1.5) * 0.4)); // Adjust the multiplier for maxGold
 
     const investmentCost = Math.floor(baseValue * 0.01); // 10% of the base value as an example
 
-    const caveName = generateCodename(); // You can customize the name or even generate one randomly
+    const caveName = generateCodename(rng.nextFloat(),rng.nextFloat()); // You can customize the name or even generate one randomly
 
-    let c = new Cave(caveName, stabilityString, investmentCost, baseValue);
+	let randArr = [];
+	for (let i = 0; i < 500; i++) {
+		randArr.push(rng.nextFloat());
+	}
+
+    let c = new Cave(caveName, stabilityString, investmentCost, baseValue,randArr);
+	c.seed = seed;
     return c;
 }
 
@@ -464,12 +690,12 @@ function lerp(a, b, t) {
 }
 
 function generateRandom(min, max) {
-    return Math.floor(lerp(min, max, Math.random()));
+    return Math.round(lerp(min, max, Math.random()));
 }
 
 function getRandomTime(multiplier) {
     if (multiplier == undefined) {
-        multiplier = 15;
+        multiplier = 25;
     }
     const currentTime = new Date();
     const randomMinutes = (Math.random() * (0.25) + 0.75) * multiplier;
@@ -487,18 +713,21 @@ function handleRemoval(caveToRemove, cData, reason, index) {
     cavesContainer.replaceChild(caveElement, caveToRemove);
 }
 
+caveElements = {};
+caveIntervals = {};
 function createCaveElement(caveData, ind) {
     const cave = document.createElement("div");
+	caveElements[ind] = cave;
     cave.className = caveData.hoveredOver ? "cave" : "cave new";
-	
-	if (caveData.stabilityString == "Rift") {
-		cave.className += " riftCave";
-	}
-	
-	const dv = document.createElement("div");
-	dv.className = "bottom-scalar";
-	cave.appendChild(dv);
-	
+
+    if (caveData.stabilityString == "Rift") {
+        cave.className += " riftCave";
+    }
+
+    const dv = document.createElement("div");
+    dv.className = "bottom-scalar";
+    cave.appendChild(dv);
+
     const grid = document.createElement("div");
     grid.className = "grid-box-container mobile-grid";
 
@@ -523,10 +752,10 @@ function createCaveElement(caveData, ind) {
     timeText.innerHTML = "-h -m --s";
     dv.appendChild(timeText);
 
-    createGridFromData(caveData, grid);
+    createGridFromData(caveData.displayValues, grid);
 
     let y = function(askInvest) {
-        const maxInvest = Math.min(caveData.maxInvestments-(caveData.investmentCount+caveData.tempInvestmentCount), Math.floor(gold / caveData.investmentCost));
+        const maxInvest = Math.min(caveData.maxInvestments - (caveData.investmentCount + caveData.tempInvestmentCount), Math.floor(gold / caveData.investmentCost));
         const investment = askInvest ? parseInt(prompt(`How many teams do you want to send? (Max. ${maxInvest})`)) : 1; //parseInt(prompt(`How many teams do you want to send? (Max. ${maxInvest})`));
         const theorInvest = investment + caveData.investmentCount + caveData.tempInvestmentCount;
         if (investment > maxInvest) {
@@ -578,62 +807,83 @@ function createCaveElement(caveData, ind) {
                 }
                 return;
             }
+            
             let output = caveData.calculateGoldOutput();
-            let bonus = output["total"];
             caveData.cleanValues();
-            gold += bonus;
-            output["log"].forEach(e => addToLog(e));
-            updateGoldDisplay();
             caveText.innerHTML = caveData.getDisplayString();
-			var audio = new Audio(output["roi"] > 1 ? 'money.mp3' : "moneySad.mp3"); // replace with the path to your sound file	
-            audio.play();
+			let bonus = output["total"];
+			gold += bonus;
+			updateGoldDisplay();
+			let newID = getNextTeamID();
+            for (let i = 0; i < 25; i++) {
+                let coordStr = `${(Math.floor(i/5))+1}X${(i%5)+1}`;
+				let outputDescriptor = "subpar returns";
+				if (output.totalArray[i] > 0.5) {
+					outputDescriptor = "good returns";
+				}
+				if (output.totalArray[i] >= 0.99) {
+					outputDescriptor = "fantastic returns";
+				}
+				appendToTeamLog(newID, caveData.randomValues[i] == 3 ? `Tile at ${coordStr} negatively impacted yields.` : `Tile at ${coordStr} yielded ${outputDescriptor}.`,caveData);
+                caveData.displayValues[i] = caveData.randomValues[i];
+            }
+			appendToTeamLog(newID,"Technical Information:",caveData);
+			appendToTeamLog(newID,"Shareable Code: " + caveData.seed.toString(32),caveData);
+			appendToTeamLog(newID,"Value String: " + caveData.randomValues,caveData);
+			teamLog[newID]["subtitle"] = `${output["origTotal"]} / ${output["invests"]} = ${output["total"]} (${output["roi"].toFixed(2)} ROI)`;
+			
+			generateTabs();
+			caveData.displayValues = caveData.randomValues; // Once you have sent a team, you get full data on the cave
+			output["log"].forEach(e => addToLog(e));
+			var audio = new Audio(output["roi"] > 1 ? 'money.mp3' : "moneySad.mp3");
+			audio.play();
 			if (document.hidden && 'Notification' in window && output["log"].length > 0) {
 
 				if (Notification.permission === 'granted') {
-					new Notification(`CHASM: Payout from ${caveData.name}`, {body:(output["log"][output["log"].length - 1]).replace(/(<([^>]+)>)/ig, '')});
+					new Notification(`CHASM: Payout from ${caveData.name}`, {
+						body: (output["log"][output["log"].length - 1]).replace(/(<([^>]+)>)/ig, '')
+					});
 				}
 			}
 
-            if (caveData.investmentCount >= caveData.maxInvestments) {
-                clearInterval(x);
-                handleRemoval(cave, caveData, `<0> has been fully extracted, replacing with <1>`, ind);
-                /*let n = caveData.name;
-                caves[ind] = generateRandomCave();
-                addToLog(`${n} has been fully extracted, replacing with ${caves[ind].name}`);
-                let caveElement = createCaveElement(caves[ind]);
-                cavesContainer.replaceChild(caveElement, cave);*/
-            }
+			if (caveData.investmentCount >= caveData.maxInvestments) {
+				clearInterval(x);
+				handleRemoval(cave, caveData, `<0> has been fully extracted, replacing with <1>`, ind);
+				/*let n = caveData.name;
+				caves[ind] = generateRandomCave();
+				addToLog(`${n} has been fully extracted, replacing with ${caves[ind].name}`);
+				let caveElement = createCaveElement(caves[ind]);
+				cavesContainer.replaceChild(caveElement, cave);*/
+			}
         }
         //clearInterval(x); //For end-of-life on the element
     }, 1000);
+	
+	caveIntervals[ind] = x;
 
     //Hover over code
     cave.addEventListener("mouseover", function(event) {
-        createGridFromData(caveData, document.getElementById('grid-container'));
-        cave.className = cave.className.replace("new","");
+        createGridFromData(caveData.displayValues, document.getElementById('grid-container'));
+        cave.className = cave.className.replace("new", "");
         caveData.hoveredOver = true;
     });
 
     return cave;
 }
 
-function createGridFromData(data, grid) {
-    let v = [];
-    let colorDict = {
-        0: "#444444",
-        1: "#888888",
-        2: "white",
-        3: "red",
-        4: "purple",
-		5:"black",
-		6:"yellow",
-		7:"green"
-    };
-    for (let i = 0; i < 25; i++) {
-        v.push(colorDict[data.randomValues[i]]);
-    }
-    createGrid(v, grid);
-}
+var colorDict = {
+	0: "background-color:#444444",
+	1: "background-color:#888888",
+	2: "background-color:white; box-shadow: inset 0 0 0 5px #bbb;",
+	3: "background-color:red",
+	4: "background-color:purple",
+	5: "background-color:black",
+	6: "background-color:yellow",
+	7: "background-color:green",
+	1000: "background-image: url('noise.gif');background-size: 100% auto;image-rendering: pixelated;"
+};
+
+
 
 function updateGoldDisplay() {
     document.getElementById("gold").textContent = `G: ${gold}`;
@@ -675,10 +925,10 @@ cavesContainer.innerHTML = "";
 //Loading
 var save = JSON.parse(window.localStorage.getItem("save"));
 if (save !== null && save !== undefined) {
-	hidewelcome();
-	console.log(save);
+    hidewelcome();
+    console.log(save);
     if (save["caves"] !== undefined) {
-        
+
         caves = save["caves"];
         for (let i = 0; i < 12; i++) {
             caves[i] = Object.assign(new Cave, caves[i]);
@@ -693,36 +943,63 @@ if (save !== null && save !== undefined) {
     if (save["gold"] !== undefined) {
         gold = save["gold"];
     }
+
+    if (save["marketTime"] !== undefined) {
+        marketTime = save["marketTime"];
+    }
+
+    if (save["seed"] !== undefined) {
+        noise.seed(save["seed"]);
+        seed = save["seed"]
+    }
+
+    if (save["market"] !== undefined) {
+        marketValueDict = save["market"];
+    }
+
+    if (save["log"] !== undefined) {
+        teamLog = save["log"];
+    }
+	if (save["redeemed"] !== undefined) {
+       	 	redeemedSeeds = save["redeemed"];
+  	  }
 	
-	if (save["marketTime"] !== undefined) {
-		marketTime = save["marketTime"];
+	if (save["nextExpedition"] !== undefined) {
+		nextExpedition = save["nextExpedition"]
 	}
-	
-	if (save["seed"] !== undefined) {
-		noise.seed(save["seed"]);
-		seed = save["seed"]
-	}
-	
-	if (save["market"] !== undefined) {
-		marketValueDict = save["market"];
-	}
-	updateMarket(false);
+    updateMarket(false);
 } else {
     for (let i = 0; i < 12; i++) {
         let c = generateRandomCave(false);
         caves.push(c);
     }
-	updateMarket();
+    updateMarket();
     Notification.requestPermission();
 }
 
 rebuildUI();
-function createGrid(colors, gridContainer) {
+
+function createGridFromData(arr, grid,suffix) {
+	if (suffix == undefined) {
+		suffix = "";
+	}
+    let v = [];
+    
+    for (let i = 0; i < 25; i++) {
+        v.push(colorDict[arr[i]]);
+    }
+    createGrid(v, grid,suffix);
+}
+
+function createGrid(colors, gridContainer,suffix) {
+	if (suffix == undefined) {
+		suffix = "";
+	}
     gridContainer.innerHTML = '';
     for (let color of colors) {
         const box = document.createElement('div');
-        box.className = 'grid-box';
-        box.style.backgroundColor = color;
+        box.className = 'grid-box'+suffix;
+        box.style = color;
         gridContainer.appendChild(box);
     }
 }
@@ -730,22 +1007,115 @@ function createGrid(colors, gridContainer) {
 function resetSave() {
     if (confirm('Warning: This WILL delete your saved progress! Are you *sure*?')) {
         window.localStorage.setItem("save", null);
+		document.getElementById("tabone").click();
         location.reload();
     }
 }
 
 function hidewelcome() {
-	document.getElementById("welcome").style = "display: none";
+    document.getElementById("welcome").style = "display: none";
 }
 
 setInterval(function() {
     window.localStorage.setItem("save", JSON.stringify({
         "gold": gold,
         "caves": caves,
-		"marketTime": marketTime,
-		"seed": seed,
-		"market": marketValueDict
+        "marketTime": marketTime,
+        "seed": seed,
+        "market": marketValueDict,
+        "log": teamLog,
+		"nextExpedition": nextExpedition,
+	"redeemed":redeemedSeeds
     }));
 }, 5000);
 
 //createGrid(colorsArray);
+
+// Function to generate tabs
+
+let tabClickedOn = 0;
+
+function generateTabs() {
+	var tabsContainer = document.getElementById('teamLogTabs');
+	tabsContainer.innerHTML = '';
+	
+	for (let i = Object.keys(teamLog).length - 1; i >= 0; i--) {
+		let key = Object.keys(teamLog)[i];
+	  if (teamLog.hasOwnProperty(key)) {
+		var tab = document.createElement('div');
+		tab.classList.add('teamTab');
+		tab.textContent = teamLog[key].name;
+		tab.dataset.key = key;
+		tab.addEventListener('click', onTabClick);
+		tabsContainer.appendChild(tab);
+	  }
+	}
+	
+	if (tabClickedOn > document.getElementsByClassName('teamTab').length) {
+		document.getElementsByClassName('teamTab')[tabClickedOn].click();
+	}
+	
+}
+
+function addSquareToParagraph(paragraph, st) {
+    // Create a new square element
+    var square = document.createElement('div');
+
+    // Apply styles to the square
+    square.style = st;
+	square.className = "logSquare";
+
+    // Append the square to the paragraph
+    paragraph.appendChild(square);
+}
+
+// Function to handle tab click
+function onTabClick(event) {
+	var key = event.target.dataset.key;
+	tabClickedOn = key;
+	let logContent = document.getElementById('logContent');
+	logContent.innerHTML = "";
+	let header = document.createElement("div");
+	header.className = "logHeader";
+	logContent.appendChild(header);
+	let header2 = document.createElement("div");
+	header2.style = "flex:2;padding-left: 5vw;text-align:center;";
+	header.appendChild(header2);
+	let title = document.createElement("h1");
+	title.style = "";
+	title.textContent = `${teamLog[key].name}`;
+	header2.appendChild(title);
+	
+	let title2 = document.createElement("h2");
+	title2.style = "";
+	title2.textContent = `${teamLog[key].subtitle}`;
+	header2.appendChild(title2);
+	
+	let grid = document.createElement("div");
+	grid.className = "grid-box-container-alt";
+	header.appendChild(grid);
+	createGridFromData(teamLog[key].values, grid,"-alt");
+	
+	for (let i = 0; i < teamLog[key].log.length ; i++) {
+		let para = document.createElement("p");
+		addSquareToParagraph(para,colorDict[teamLog[key]["values"][i]]);
+		para.innerHTML += teamLog[key].log[i];
+		logContent.appendChild(para);
+	}
+	// Remove 'active' class from all tabs
+	var tabs = document.querySelectorAll('.teamTab');
+	tabs.forEach(function(tab) {
+	  tab.classList.remove('active');
+	});
+	// Add 'active' class to the clicked tab
+	event.target.classList.add('active');
+}
+
+// Initial setup
+generateTabs();
+
+// Select the first tab by default
+var firstTab = document.querySelector('.teamTab');
+if (firstTab) {
+	firstTab.click();
+}

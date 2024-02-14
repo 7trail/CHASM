@@ -28,8 +28,8 @@ body {
 }
 
 #marketValues {
-	background-color: #eeeeee;
-	border-radius: 10px;
+	background-color: white;
+	border-radius: 0 10px 10px 10px;
 	padding: 50px;
 	display: grid;
 	grid-template-columns: repeat(2, 50%);
@@ -47,16 +47,17 @@ body {
 
 .flex {
     display: flex;
+	position: relative;
     justify-content: space-between;
 }
 
 .container {
     /*margin: 50px auto;*/
-    flex-grow: 1;
     background-color:white;
     padding: 20px;
+
     padding-top: 1px;
-    border-radius: 10px;
+    border-radius: 0 10px 10px 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -66,6 +67,14 @@ body {
     flex-wrap: wrap;
     align-items: left;
     justify-content: left;
+}
+
+#marketCanvas {
+	display:block;
+	align-content: center;
+	margin: auto;
+	border: 3px solid black;
+	margin-top: 5px;
 }
 
 .cave {
@@ -91,8 +100,7 @@ body {
 
 .hud {
 	height: 100%;
-	width: 500px;
-	flex-shrink:0.5;
+	flex:1;
 	min-width: 300px;
 	position: -webkit-sticky;
 	position: sticky;
@@ -146,14 +154,22 @@ body {
 
 .marketValue {
 	margin-top: 10px;
+	padding-bottom: 10px;
+	background-color: white;
+	border-radius: 8px;
+	border: 3px solid black;
 }
 
 .marketText {
+	margin-left: 1vw;
 	font-size: 20px;
 }
 
 .resetButton {
-	display:block;margin:auto;width:200px;height:50px;background-color: #000000;color:white;border-radius: 15px;
+	display:block;margin:auto;width:200px;height:50px;background-color: #000000;color:white;border-radius: 15px; cursor: pointer;font-size: 14px;
+}
+.resetButton:hover {
+	background-color: #222222;
 }
 
 .caveButton2 {
@@ -231,6 +247,30 @@ button {
 	overflow-y:scroll;
 }
 
+#teamLog {
+	background-color: white;
+	border-radius: 0 10px 10px 10px;
+	padding: 50px;
+	display: flex;
+	gap: 5px;
+}
+
+#settings {
+	display: block;
+	margin: auto;
+	text-align: center;
+	background-color: white;
+	border-radius: 0 10px 10px 10px;
+	padding: 50px;
+	gap: 5px;
+}
+
+#discord {
+	padding-top: 10px;
+	width: 75px;
+	height: auto;
+}
+
 #go {
 	width:200px;
 	height:50px;
@@ -258,9 +298,131 @@ button {
    margin: auto;
 }
 
+.grid-box-alt {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+  border: none;
+}
+
+.grid-box-container-alt {
+  display: grid;
+  grid-template-columns: repeat(5, 20px);
+  grid-template-rows: repeat(5, 20px);
+  gap: 0px;
+  border:2px solid black;
+  width: 100px;
+  height: 100px;
+  margin-right: 20px;
+}
+
+.logHeader {
+	display:flex;
+}
+
 .mobile-grid {
 	display:none;
 }
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap; 
+  flex:3;
+}
+
+.tabs label {
+  order: 1; 
+  text-align: center;
+  font-size: 20px;
+  display: block;
+  padding: 10px 2vw;
+  cursor: pointer;
+  background: #fff;
+  box-shadow: inset 0 0 0 5px #333;
+  border-radius: 10px 10px 0 0;
+  font-weight: bold;
+  /*transition: background ease 0.2s;*/
+}
+
+.tabs [class^="tab"] {
+  order: 99; 
+  flex-grow: 1;
+  width: 100%;
+  min-height: 100%;
+  display: none;
+  /*padding: 1rem;
+  background: #fff;*/
+}
+
+.tabs input[type="radio"] {
+  display: none;
+}
+
+.tabs input[type="radio"]:hover + label {
+  background: #444444;
+  color:white;
+}
+
+.tabs input[type="radio"]:checked + label {
+  background: #999999;
+
+}
+
+.tabs input[type="radio"]:checked + label + [class^="tab"] {
+  display: block;
+  flex-grow: 1;
+}
+
+#teamLogTabs {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	overflow-y: scroll;
+	height: 50vh;
+}
+
+.teamTab {
+    cursor: pointer;
+    padding: 10px;
+    background-color: white;
+    border: 3px solid black;
+    display: inline-block;
+	font-size:18px;
+	border-radius: 8px 0 0 8px;
+}
+
+.teamTab.active {
+	background-color: #999999;
+	
+}
+.teamLog-content {
+	flex: 2;
+	overflow-y: scroll;
+	border: 1px solid #ccc;
+	padding: 10px 0 10px 0;
+	height: 50vh;
+}
+
+
+.teamLog-content p {
+	font-size: 16px;
+	padding-top:5px;
+	padding-bottom:5px;
+	margin: 0;
+	padding-left: 5px;
+}
+
+.teamLog-content > *:nth-child(odd) {
+	background-color: #e0e0e0; /* light gray */
+}
+
+.logSquare {
+	width:20px;
+	height:20px;
+	float:left;
+	margin-right: 10px;
+}
+
 @media screen and (min-width: 601px) {
 	.cave {
 		min-height:150px;
@@ -278,6 +440,18 @@ button {
 	
 	.flex {
 		flex-direction: column;
+	}
+	
+	.logHeader {
+		flex-direction: column;
+		align-content:center;
+		justify-content: center;
+		
+	}
+	
+	.grid-box-container-alt {
+		margin: auto;
+		margin-bottom: 15px;
 	}
 	
 	.timeText {
@@ -302,6 +476,22 @@ button {
 	#welcome {
 		left: 10vw;
 		width: 80vw;	
+	}
+	
+	#teamLogTabs {
+		flex-direction: row;
+		flex: 1;
+		overflow-x: scroll;
+	}
+	
+	#teamLog {
+		flex-direction: column;
+		padding: 3px 10px 3px 0;
+	}
+	
+	.teamTab {
+		font-size: 15px;
+		border-radius: 8px 8px 0 0;
 	}
 	
 	.caveButton {
@@ -332,7 +522,8 @@ button {
 	
 	#marketValues {
 		padding: 15px;
-		background-color: white;
+		background-color: rgba(255,255,255,0.1);
+		backdrop-filter: blur(10px);
 		grid-template-columns: repeat(1, 100%);
 	}
 	
@@ -352,7 +543,7 @@ button {
 		bottom: 10px; /* Stick to the bottom */
 		text-align: center; /* Center text on mobile */
 		background-color: #fff;
-		padding: 20px;
+		
 		padding-top: 1px;
 		border: 2px solid gray;
 		border-radius: 10px;

@@ -3,19 +3,19 @@ let gold = 100;
 let tileValueDict = {
     0: {
 		"min":0,
-		"max":3
+		"max":7
 	},
 	1: {
-		"min":0,
-		"max":12
+		"min":3,
+		"max":9
 	},
 	2: {
 		"min":7,
-		"max":14
+		"max":12
 	},
 	3: {
-		"min":-6,
-		"max":-3
+		"min":-8,
+		"max":-6
 	},
     4: {
         "min": 0,
@@ -110,7 +110,7 @@ class Cave {
                     t += this.purpleValue;
                 }
             } else {
-                let f = Math.pow(Math.random(), 1);
+                let f = Math.pow(Math.random(), 2);
                 //Experimental Synergy System
                 f *= this.stabilityString == "Rampant" ? 0.4 : 0.9;
                 let mod = this.stabilityString == "Rampant" ? 0.2 : 0.05;
@@ -130,6 +130,7 @@ class Cave {
             }
 
         }
+        t *= 0.8+Math.random()*0.4;
         let totalGoldOutput = Math.floor((t / 100) * this.baseValue);
 
 
@@ -209,7 +210,7 @@ function lerp (a,b,t) {
 }
 
 function generateRandom(min, max) {
-    return Math.floor(lerp(min,max,Math.random()));
+    return Math.round(lerp(min,max,Math.random()));
 }
 
 function getRandomTime(multiplier) {
@@ -414,7 +415,11 @@ function runTest(cave, header) {
 let caves = [];
 
 let c = generateRandomCave();
-let myArray = [
+for (let i = 0; i < 25; i++) {
+c.rollRandomValues();
+runTest(c, "Natural Test " + i);
+}
+/*let myArray = [
     ...Array(12).fill(0),
     ...Array(12).fill(1),
     2
@@ -475,7 +480,7 @@ myArray = [
     2,4,5,5,5,4,4,2,5,5,5,5,4,2,5,5,5,4,3,5,4,5,2,5,4
 ];
 c.randomValues = myArray;
-runTest(c, "Test 9: Rift (Naturally Generated)");
+runTest(c, "Test 9: Rift (Naturally Generated)");*/
 
 function rollRandomValues(type) {
 	let spreadDict = {"default":[0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,2],"rift":[5,5,5,5,5,5,4,4,4,2,2]};
@@ -524,5 +529,7 @@ function createGrid(colors) {
     gridContainer.appendChild(box);
   }
 }
+
+
 
 //createGrid(colorsArray);
