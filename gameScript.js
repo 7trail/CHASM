@@ -814,6 +814,7 @@ function createCaveElement(caveData, ind) {
 			let bonus = output["total"];
 			gold += bonus;
 			updateGoldDisplay();
+			createGridFromData(caveData.displayValues, grid);
 			let newID = getNextTeamID();
             for (let i = 0; i < 25; i++) {
                 let coordStr = `${(Math.floor(i/5))+1}X${(i%5)+1}`;
