@@ -10,6 +10,7 @@ const Log = [];
 let teamLog = {};
 let redeemedSeeds = [];
 let nextExpedition = 0;
+let lossStreak = 0;
 
 function importCave() {
 	let seed = parseInt(prompt("What is the Cave ID?"),32);
@@ -24,8 +25,6 @@ function importCave() {
 	let cE = createCaveElement(caves[0],0);
     addToLog("A cave has been imported!");
     cavesContainer.replaceChild(cE,cB);
-	
-	
 }
 
 function RNG(seed) {
@@ -335,7 +334,7 @@ class Cave {
             }
 
         }
-	t *= 0.8 + Math.random()*0.4;
+		t *= 0.8 + Math.random()*0.4 + (lossStreak*0.1);
         let totalGoldOutput = Math.floor((t / 100) * this.baseValue);
 
 
@@ -353,6 +352,11 @@ class Cave {
         totalGoldOutput = Math.floor(totalGoldOutput / (100 / this.tempInvestmentCount));
         let roi = (totalGoldOutput / (this.tempInvestmentCount * this.investmentCost));
         logMessages.push(`<b>Your ${this.tempInvestmentCount} ${pluralMsg} on ${this.name} gathered ${totalGoldOutput} G (${roi.toFixed(2)} ROI)</b>`);
+		if (roi < 1) {
+			lossStreak++;
+		} else {
+			lossStreak = 0;
+		}
         return {
             "total": Math.floor(totalGoldOutput),
             "log": logMessages,
@@ -948,6 +952,10 @@ if (save !== null && save !== undefined) {
     if (save["marketTime"] !== undefined) {
         marketTime = save["marketTime"];
     }
+	
+	if (save["lossStreak"] !== undefined) {
+        lossStreak = save["lossStreak"];
+    }
 
     if (save["seed"] !== undefined) {
         noise.seed(save["seed"]);
@@ -1026,6 +1034,7 @@ setInterval(function() {
         "market": marketValueDict,
         "log": teamLog,
 		"nextExpedition": nextExpedition,
+		"lossStreak":lossStreak,
 	"redeemed":redeemedSeeds
     }));
 }, 5000);
